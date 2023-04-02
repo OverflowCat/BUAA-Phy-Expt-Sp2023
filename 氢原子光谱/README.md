@@ -71,13 +71,15 @@
 
 ### 1. 本实验能否将钠黄光的双线分开，为什么？怎样才能把它们分开？
 
-可以根据<ruby>瑞利判据<rp>（</rp><rt>Rayleigh criterion</rt><rp>）</rp></ruby>计算人眼分辨率限制．在明亮的环境下，人眼的瞳孔直径通常约为 $2\ \mathrm{mm}$，实验中所用钠黄光波长 $\lambda=589.3\ \mathrm{nm}$，故
+可以根据<ruby>瑞利判据<rp>（</rp><rt>Rayleigh criterion</rt><rp>）</rp></ruby>计算人眼分辨率限制．在明亮的环境下，人眼的瞳孔直径通常约为 $2～4\ \mathrm{mm}$，取**光学系统的孔径** $D=2\ \mathrm{mm}$．实验中所用**钠黄光波长** $\lambda=589.3\ \mathrm{nm}$．故
 
 $$ \theta = 1.22 \cdot \frac{\lambda}{D} = 1.22 \times \frac{ 589.3 \times 10^{-9}} { 2 \times 10^3} = 0.00035947\ \mathrm{rad} = 1.24'.$$
 
 <!-- TODO -->
 
 ### 2. 请查阅文献，列举光谱仪有哪些应用．
+
+> 查阅了 <a href="https://en.wikipedia.org/wiki/Optical_spectrometer">[[optical spectrometer]]</a> 和 GPT-4．好像有好多种光谱仪，非常混乱……
 
 **天文学**：光谱仪在天文学中被广泛应用于研究恒星、星系、类星体等天体的物理和化学性质，通过分析光谱数据，天文学家可以了解天体的温度、成分、距离、年龄以及演化状态，从而揭示宇宙的起源和演化．
 
