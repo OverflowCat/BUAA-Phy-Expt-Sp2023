@@ -76,6 +76,13 @@
 
 #assert(coeff_angle(102, .5) == 31, message: "Angle should be positive")
 
+#let to_degreef(angle) = {
+  let angle_deg = getdigit(angle)
+  let angle_min = calc.mod(angle, 100)
+  angle_deg += angle_min / 60
+  angle_deg
+}
+
 #let calc_theta(a1, b1, a2, b2) = {
   coeff_angle(sum_angles(sum_angles(a1, -a2), sum_angles(b1, -b2)), .5)
 }
@@ -101,7 +108,7 @@
   inset: 10pt,
   align: horizon,
   [*测量级次*], [$-2$], [$-2$], [$+2$], [$+2$], [],
-  [*组数*], [$alpha_1$], [$beta_1$], [$alpha_2$], [$beta_2$], [$theta$],
+  [*组数*], [$alpha_1$], [$beta_1$], [$alpha_2$], [$beta_2$], [$2 theta_i$],
   $1$, ..line(..data.at(0)),
   $2$, ..line(..data.at(1)),
   $3$, ..line(..data.at(2)),
@@ -109,10 +116,59 @@
   $5$, ..line(..data.at(4)),
 )
 
+=== 计算光栅常数
+
 #let sum_multi_angles(arr) = {
   arr.fold(0, sum_angles)
 }
 
-$ theta = 1/5 sum^5_(i=1) theta_i = #d(coeff_angle(sum_multi_angles(data.map(x => calc_theta(..x))), .2)) $
+#let double_thetas = data.map(x => calc_theta(..x))
 
-由 $d sin theta = k lambda$, $k=1$, 得
+#let double_theta_val = coeff_angle(sum_multi_angles(double_thetas), .2)
+
+$ 2 overline(theta) = 1/5 sum^5_(i=1) theta_i = #d(double_theta_val), $
+
+#let theta_val = int(coeff_angle(double_theta_val, .5))
+
+$ theta = #d(theta_val) $
+
+由 $d sin theta = k lambda$, $k=2$, 得
+
+#let thetaf = to_degreef(theta_val)
+#let to_rad = x => calc.pi / 180 * x
+#let theta_rad = to_rad(thetaf)
+#let sin_theta = calc.sin(theta_rad)
+#let cos_theta = calc.sin(theta_rad)
+#let d = 2 * 589.3 * 1e-9 / sin_theta
+
+$ d = (k lambda) / (sin theta) = (2 times 589.3 times 10^(-9)) / (sin #calc.round(thetaf, digits: 3) degree) = #{calc.round(d, digits: 10) * 1e6} "μm" $
+
+=== 计算不确定度 $u(d)$
+
+#let diffs=double_thetas.map(to_degreef).map(to_rad). map(rad => rad / 2 - theta_rad)
+$ u_"a"(2 theta) = sqrt(sum (theta_i - overline(theta))/(5 times 4))$
+$ = sqrt(#{diffs.map(x => calc.round(x, digits: 3)).map(str).join("² + ") + "²"} / (5 times 4)) $
+#let u_a_2theta = calc.sqrt(diffs.map(x => calc.pow(x, 2)).fold(0, (x, y) => x + y) / (5 * 4))
+$ = #u_a_2theta "rad." $
+
+$ u_"b"(2 theta) = Delta_(2 theta) / (2 sqrt(3)) = (1') / (2 sqrt(3)) = 8.397219 times 10^(-5) "rad." $
+
+#let u_b_2theta = to_rad(1/60) / (2 * calc.sqrt(3))
+#let u_2theta = calc.sqrt(u_a_2theta * u_a_2theta + u_b_2theta * u_b_2theta)
+$ u(2 theta) = sqrt((u_"a"(theta))^2 + (u_"b"(theta))^2) = #u_2theta $
+#let u_theta = 1/2 * u_2theta
+$ u(theta) = u_2theta / 2 = #u_theta $
+// #let u_d = calc.round(calc.sqrt(calc.pow(2 * 589.3 * 1e-9 * calc.cos(theta_rad) / calc.sin(theta_rad) * u_theta, 2)), digits: 14)
+
+$ u(d) = sqrt(((diff d) / (diff theta)) ^ 2 u^2(theta)) = sqrt((-(k lambda cos x)/(sin^2 x)) ^ 2 u^2(theta)). $
+#let u_d = calc.sqrt(calc.pow(-2 * 589.3 * 1e-9 * cos_theta / sin_theta / sin_theta, 2) * calc.pow(u_theta, 2))
+$ = #calc.round(u_d, digits: 14) $
+$ = #{u_d * 1e6} "μm" $
+
+=== 最终表述
+
+$ u(d) = 3.220 ± 0.006 "μm." $
+
+// #let u_d_alt = d * (u_theta / calc.tan(theta_rad))
+// $ u(d) = (cos theta)/((sin theta)^2) u(theta) = #u_d $
+// $ = #{u_d_alt * 1e6} "μm" $
