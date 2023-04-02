@@ -15,7 +15,7 @@
 
 === 原始数据列表
 
-#let d(int) = {
+#let di(int) = {
   let deg = calc.floor(int / 100)
   $deg degree #calc.mod(int, 100)'$
 }
@@ -92,7 +92,7 @@
 // = 42 56 + 42 57 = 42 56.5
 
 #let line(a1, b1, a2, b2) = {
-  (a1, b1, a2, b2, calc_theta(a1, b1, a2, b2)).map(d)
+  (a1, b1, a2, b2, calc_theta(a1, b1, a2, b2)).map(di)
 }
 
 #let data = (
@@ -126,11 +126,11 @@
 
 #let double_theta_val = coeff_angle(sum_multi_angles(double_thetas), .2)
 
-$ 2 overline(theta) = 1/5 sum^5_(i=1) theta_i = #d(double_theta_val), $
+$ 2 overline(theta) = 1/5 sum^5_(i=1) theta_i = #di(double_theta_val), $
 
 #let theta_val = int(coeff_angle(double_theta_val, .5))
 
-$ theta = #d(theta_val) $
+$ theta = #di(theta_val) $
 
 由 $d sin theta = k lambda$, $k=2$, 得
 
@@ -147,7 +147,7 @@ $ d = (k lambda) / (sin theta) = (2 times 589.3 times 10^(-9)) / (sin #calc.roun
 
 #let diffs=double_thetas.map(to_degreef).map(to_rad). map(rad => rad / 2 - theta_rad)
 $ u_"a"(2 theta) = sqrt(sum (theta_i - overline(theta))/(5 times 4))$
-$ = sqrt(#{diffs.map(x => calc.round(x, digits: 3)).map(str).join("² + ") + "²"} / (5 times 4)) $
+$ = sqrt(#{"(" + diffs.map(x => calc.round(x, digits: 3)).map(str).join(")² + (") + ")²"} / (5 times 4)) $
 #let u_a_2theta = calc.sqrt(diffs.map(x => calc.pow(x, 2)).fold(0, (x, y) => x + y) / (5 * 4))
 $ = #u_a_2theta "rad." $
 
@@ -155,9 +155,9 @@ $ u_"b"(2 theta) = Delta_(2 theta) / (2 sqrt(3)) = (1') / (2 sqrt(3)) = 8.397219
 
 #let u_b_2theta = to_rad(1/60) / (2 * calc.sqrt(3))
 #let u_2theta = calc.sqrt(u_a_2theta * u_a_2theta + u_b_2theta * u_b_2theta)
-$ u(2 theta) = sqrt((u_"a"(theta))^2 + (u_"b"(theta))^2) = #u_2theta $
+$ u(2 theta) = sqrt((u_"a"(theta))^2 + (u_"b"(theta))^2) = #u_2theta "rad." $
 #let u_theta = 1/2 * u_2theta
-$ u(theta) = u_2theta / 2 = #u_theta $
+$ u(theta) = u_2theta / 2 = #u_theta "rad." $
 // #let u_d = calc.round(calc.sqrt(calc.pow(2 * 589.3 * 1e-9 * calc.cos(theta_rad) / calc.sin(theta_rad) * u_theta, 2)), digits: 14)
 
 $ u(d) = sqrt(((diff d) / (diff theta)) ^ 2 u^2(theta)) = sqrt((-(k lambda cos x)/(sin^2 x)) ^ 2 u^2(theta)). $
@@ -167,8 +167,61 @@ $ = #{u_d * 1e6} "μm" $
 
 === 最终表述
 
-$ u(d) = 3.220 ± 0.006 "μm." $
+$ u(d) = 3.192 ± 0.006 "μm." $
 
 // #let u_d_alt = d * (u_theta / calc.tan(theta_rad))
 // $ u(d) = (cos theta)/((sin theta)^2) u(theta) = #u_d $
 // $ = #{u_d_alt * 1e6} "μm" $
+
+= 氢原子光谱
+
+#let to_int(degreef) = {
+  let min = calc.mod(degreef, 1) * 60
+  int(int(degreef) * 100 + min)
+}
+
+#let blue3 = (
+  a: (
+      m: 14101,
+      p: 8858,
+  ),
+  b: (
+      m: 32057,
+      p: 26855,
+  ),
+)
+#let blue1 = (
+  a: (
+    m: 12331,
+    p: 33329,
+  ),
+  b: (
+    m: 10654,
+    p: 28651,
+  ),
+)
+
+#let red1 = (
+a: (
+    m: 12628,
+    p: 30628,
+  ),
+  b: (
+    m: 10345,
+    p: 28344,
+  ),
+)
+
+#let calc_tc(x) = {
+  let diffa = to_degreef(x.a.p) - to_degreef(x.a.m)
+  let diffb = to_degreef(x.b.p) - to_degreef(x.b.m)
+  (calc.abs(diffa) + calc.abs(diffb)) / 4
+}
+
+#let tblue3 = calc_tc(blue3)
+#let tblue1 = calc_tc(blue1)
+#let tred1 = calc_tc(red1)
+
+$ theta_(3蓝) = #di(to_int(tblue3)) $
+$ theta_(1蓝) = #di(to_int(tblue1)) $
+$ theta_(1红) = #di(to_int(tred1)) $
