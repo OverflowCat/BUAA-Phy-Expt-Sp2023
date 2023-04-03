@@ -203,7 +203,7 @@ $ u(d) = 3.192 ± 0.006 "μm." $
   }
 // #assert(sci(-0.0112343245) == $-1.12343 times 10^(-2)$)
 
-#let fin_res(res, uncert) = {
+#let fin_res(res, uncert, symbol: none, unit: none) = {
   let expn = 0
   while uncert <= 1 {
     uncert *= 10
@@ -215,9 +215,27 @@ $ u(d) = 3.192 ± 0.006 "μm." $
     res /= 10
     expn += 1
   }
-  res = calc.round(res)
-  uncert = calc.round(uncert)
-  $#res ± #uncert times 10^#expn$
+  let offset = str(calc.round(res)).len() - 1
+  if offset > 0 {
+    let tens = pow(10, offset)
+    uncert /= tens
+    res /= tens
+  }
+  res = calc.round(res, digits: offset)
+  uncert = calc.round(uncert, digits: offset)
+  let res_s = str(res)
+  let uncert_s = str(uncert)
+  while res_s.len() < uncert_s.len() {
+    res_s += "0"
+  }
+  if symbol != none {
+    $#symbol ± u(#symbol) =$
+  }
+  $(#res_s ± #uncert_s) times 10^#expn$
+  if unit != none {
+    $#unit$
+  }
+  $.$
 }
 
 === 数据列表
@@ -290,29 +308,32 @@ u(R_"H")
 $
 
 #let calc_rf(color, lv, degreef) = {
+  let R_name = $R_(H#lv#color)$
+  let θ_name = $θ_(#lv#color)$
+  let λ_name = $λ_(#lv#color)$
   [#{"对于" + color + "光"} #lv 级，]
   let rad = to_rad(degreef)
   let sin_theta = calc.sin(rad)
   let cos_theta = calc.cos(rad)
   let lambda_val = d * sin_theta / lv
-  [$theta = #t5(rad) "rad"$，]
-  [故 $lambda = (d sin theta) / #lv = #t5(lambda_val * 1e9) "nm."$ ]
+  [$#θ_name = #t5(rad) "rad"$，]
+  [故 $#λ_name = (d sin theta) / #lv = #t5(lambda_val * 1e9) "nm."$ ]
   let n = if color == "红" { 3 } else { 4 }
   [#color 光对应的 $n=#n$，]
   let R_H = 1 / lambda_val / (1/(2*2) - 1/(n*n))
-  [所以 $R_(H) = 1/(lambda(1/(2^2)-1/(#n^2))) = #t5(R_H/1e7) times 10^7 "m"^(-1).$]
+  [所以 $#R_name = 1/(#λ_name (1/(2^2)-1/(#n^2))) = #t5(R_H/1e7) times 10^7 "m"^(-1).$]
   let u_theta = u_b_theta
   let u_lambda = calc.sqrt(pow(u_d * sin_theta, 2) + pow(d * cos_theta * u_theta, 2))
 
   let u_R_H = 1/(1/4-1/n/n) * (1/pow(lambda_val, 2)) * u_lambda
-  $ u(lambda) =
+  $ u(#λ_name) =
   sqrt(#sci(sin_theta)^2 (#sci(u_d))^2 +
   (#sci(d) times #sci(cos_theta))^2 (#sci(u_theta))^2) $
   $= #sci(u_lambda)" m".$
-  $ u(R_H) = 1/(1/(2^2) - 1/(#n^2)) sqrt((-((#sci(lambda_val))^2)^(-2) (#sci(u_lambda))^2)) $
+  $ u(#R_name) = 1/(1/(2^2) - 1/(#n^2)) sqrt((-((#sci(lambda_val))^2)^(-2) (#sci(u_lambda))^2)) $
   $= #t5(u_R_H)" m"^(-1).$
-  $ R_H = #fin_res(R_H, u_R_H) "m"^(-1) $
-  $ (R_H = #t5(R_H) ± #t5(u_R_H)) $
+  $ #fin_res(R_H, u_R_H, symbol: $#R_name$, unit: $"m"^(-1)$) $
+  $ (#R_name = #t5(R_H) ± #t5(u_R_H)) $
 }
 
 ==== 由红光计算
@@ -325,6 +346,31 @@ $
 
 #calc_rf("蓝", 3, tblue3)
 
-=== 最终表述
+=== 最佳测量值
+
+#let r_data = (
+  (11448118.610513207, 23565.92480843606),
+  (11556246.299750695, 24221.61351520756),
+  (11425017.806330556, 69337.22953908592),
+)
+
+#let 分子各项 = r_data.map(x => $#calc.round(x.at(0)) / #calc.round(x.at(1)) ^2$)
+#let 分母各项 = r_data.map(x => $1 / #calc.round(x.at(1)) ^2$)
+#let 分子 = r_data.map(x => x.at(0) / pow(x.at(1), 2)).fold(0, (x, y) => x + y)
+#let 分母 = r_data.map(x => 1 / pow(x.at(1), 2)).fold(0, (x, y) => x + y)
+#let u_R_avg = 分子/分母
+#let u_R_H_avg = 1/pow(分母, .5)
+
+由公式 $λ= (d sin theta) / k$ 知 $u(lambda)$ 与级数 $k$ 有关，即不同级数的波长测量精度不同，须加权平均：
+
+$
+overline(R)
+= (sum (R_(H i))/(u^2 (R_(H i)))) / (sum 1/(u^(2) (R_(H i))))
+= #分子各项.join($+$) / #分母各项.join($+$)
+$
+$ = #t5(分子) / #sci(分母) = #calc.round(u_R_avg). $
+$ u(overline(R_H))= sqrt(1 / (sum 1/(u^2 (R_(H i))))) $
+$ = (#分母各项.join($+$))^(-1/2) = #t5(u_R_H_avg). $
+
 里德伯常数最佳测量值为
-$  $
+$ #fin_res(u_R_avg, u_R_H_avg, symbol: $overline(R_"H")$, unit: $ "m"^(-1)$) $
