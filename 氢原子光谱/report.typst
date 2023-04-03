@@ -1,4 +1,6 @@
 #import "template.typ": *
+#let pow = calc.pow
+#let PI = calc.pi
 
 // Take a look at the file `template.typ` in the file panel
 // to customize this template and discover how it works.
@@ -135,7 +137,7 @@ $ theta = #di(theta_val) $
 由 $d sin theta = k lambda$, $k=2$, 得
 
 #let thetaf = to_degreef(theta_val)
-#let to_rad = x => calc.pi / 180 * x
+#let to_rad = x => PI / 180 * x
 #let theta_rad = to_rad(thetaf)
 #let sin_theta = calc.sin(theta_rad)
 #let cos_theta = calc.sin(theta_rad)
@@ -148,7 +150,7 @@ $ d = (k lambda) / (sin theta) = (2 times 589.3 times 10^(-9)) / (sin #calc.roun
 #let diffs=double_thetas.map(to_degreef).map(to_rad). map(rad => rad / 2 - theta_rad)
 $ u_"a"(2 theta) = sqrt(sum (theta_i - overline(theta))/(5 times 4))$
 $ = sqrt(#{"(" + diffs.map(x => calc.round(x, digits: 3)).map(str).join(")² + (") + ")²"} / (5 times 4)) $
-#let u_a_2theta = calc.sqrt(diffs.map(x => calc.pow(x, 2)).fold(0, (x, y) => x + y) / (5 * 4))
+#let u_a_2theta = calc.sqrt(diffs.map(x => pow(x, 2)).fold(0, (x, y) => x + y) / (5 * 4))
 $ = #u_a_2theta "rad." $
 
 $ u_"b"(2 theta) = Delta_(2 theta) / (2 sqrt(3)) = (1') / (2 sqrt(3)) = 8.397219 times 10^(-5) "rad." $
@@ -158,10 +160,10 @@ $ u_"b"(2 theta) = Delta_(2 theta) / (2 sqrt(3)) = (1') / (2 sqrt(3)) = 8.397219
 $ u(2 theta) = sqrt((u_"a"(theta))^2 + (u_"b"(theta))^2) = #u_2theta "rad." $
 #let u_theta = 1/2 * u_2theta
 $ u(theta) = u_2theta / 2 = #u_theta "rad." $
-// #let u_d = calc.round(calc.sqrt(calc.pow(2 * 589.3 * 1e-9 * calc.cos(theta_rad) / calc.sin(theta_rad) * u_theta, 2)), digits: 14)
+// #let u_d = calc.round(calc.sqrt(pow(2 * 589.3 * 1e-9 * calc.cos(theta_rad) / calc.sin(theta_rad) * u_theta, 2)), digits: 14)
 
 $ u(d) = sqrt(((diff d) / (diff theta)) ^ 2 u^2(theta)) = sqrt((-(k lambda cos x)/(sin^2 x)) ^ 2 u^2(theta)). $
-#let u_d = calc.sqrt(calc.pow(-2 * 589.3 * 1e-9 * cos_theta / sin_theta / sin_theta, 2) * calc.pow(u_theta, 2))
+#let u_d = calc.sqrt(pow(-2 * 589.3 * 1e-9 * cos_theta / sin_theta / sin_theta, 2) * pow(u_theta, 2))
 $ = #calc.round(u_d, digits: 14) $
 $ = #{u_d * 1e6} "μm" $
 
@@ -173,7 +175,7 @@ $ u(d) = 3.192 ± 0.006 "μm." $
 // $ u(d) = (cos theta)/((sin theta)^2) u(theta) = #u_d $
 // $ = #{u_d_alt * 1e6} "μm" $
 
-= 氢原子光谱
+== 氢原子光谱
 
 #let to_int(degreef) = {
   let min = calc.mod(degreef, 1) * 60
@@ -181,6 +183,44 @@ $ u(d) = 3.192 ± 0.006 "μm." $
 }
 
 #let t5(f) = calc.round(f, digits: 5)
+
+#let sci(num) = {
+    if calc.abs(num) >= 0.1 {
+      return $#t5(num)$
+    }
+    let sign = if num < 0 {
+      num *= -1
+      "-"
+    } else {
+      ""
+    }
+    let expn = 0
+    while num < 1 {
+      num *= 10
+      expn -= 1
+    }
+    return $#sign#t5(num)times 10^#expn$
+  }
+// #assert(sci(-0.0112343245) == $-1.12343 times 10^(-2)$)
+
+#let fin_res(res, uncert) = {
+  let expn = 0
+  while uncert <= 1 {
+    uncert *= 10
+    res *= 10
+    expn -= 1
+  }
+  while uncert >= 10 {
+    uncert /= 10
+    res /= 10
+    expn += 1
+  }
+  res = calc.round(res)
+  uncert = calc.round(uncert)
+  $#res ± #uncert times 10^#expn$
+}
+
+=== 数据列表
 
 #let blue3 = (
   a: (
@@ -226,31 +266,65 @@ a: (
 $ theta_(3蓝) = #di(to_int(tblue3)) $
 $ theta_(1蓝) = #di(to_int(tblue1)) $
 $ theta_(1红) = #di(to_int(tred1)) $
+
+=== 计算里德伯常数
+
 由 $k lambda = d sin theta, 得 lambda = (d sin theta) / k.$ 又
 $ R_H = 1/(lambda(1/(m^2)-1/(n^2))), $ 本实验中观察的谱线为巴尔末线系，故 $ R_H = 1/(lambda(1/4-1/(n^2))). $
+$ u_"b"(theta) = Delta_(theta) / sqrt(3) ⋅ 1 / 2 = (1') / (2 sqrt(3)) = 8.3972 times 10^(-5) "rad." $
+#let u_b_theta = to_rad(1/60) / (2 * calc.sqrt(3))
+$u(theta) = u_"b"(theta) = #u_b_theta$.
+$ u(λ) = sqrt(
+    ((diff λ) / (diff d)) ^2 u^2(d) +
+     ((diff λ) / (diff θ)) ^2 u^2 θ
+  ) = sqrt(
+    sin^2 overline(θ)_1 (u(d))^2 +
+    (d cos overline(θ))^2 u^2(overline(θ)))
+  ).
+$
+$
+u(R_"H")
+= sqrt(((diff R_H)/(diff λ))^2 u^2(λ))
+= 1/(1/(m^2) - 1/(n^2)) sqrt((-1/(λ^2))^2 u^2(λ))
+= 1/(1/4 - 1/(n^2)) sqrt((-1/(λ^2))^2 u^2(λ))
+$
+
 #let calc_rf(color, lv, degreef) = {
-  [对于 #color 光 #lv 级，]
+  [#{"对于" + color + "光"} #lv 级，]
   let rad = to_rad(degreef)
   let sin_theta = calc.sin(rad)
+  let cos_theta = calc.cos(rad)
   let lambda_val = d * sin_theta / lv
   [$theta = #t5(rad) "rad"$，]
   [故 $lambda = (d sin theta) / #lv = #t5(lambda_val * 1e9) "nm."$ ]
   let n = if color == "红" { 3 } else { 4 }
   [#color 光对应的 $n=#n$，]
-  let rh = 1 / lambda_val / (1/(2*2) - 1/(n*n))
-  [所以 $R_(H) = 1/(lambda(1/(2^2)-1/(#n^2))) = #t5(rh/1e7) times 10^7 "m"^(-1).$]
+  let R_H = 1 / lambda_val / (1/(2*2) - 1/(n*n))
+  [所以 $R_(H) = 1/(lambda(1/(2^2)-1/(#n^2))) = #t5(R_H/1e7) times 10^7 "m"^(-1).$]
+  let u_theta = u_b_theta
+  let u_lambda = calc.sqrt(pow(u_d * sin_theta, 2) + pow(d * cos_theta * u_theta, 2))
+
+  let u_R_H = 1/(1/4-1/n/n) * (1/pow(lambda_val, 2)) * u_lambda
+  $ u(lambda) =
+  sqrt(#sci(sin_theta)^2 (#sci(u_d))^2 +
+  (#sci(d) times #sci(cos_theta))^2 (#sci(u_theta))^2) $
+  $= #sci(u_lambda)" m".$
+  $ u(R_H) = 1/(1/(2^2) - 1/(#n^2)) sqrt((-((#sci(lambda_val))^2)^(-2) (#sci(u_lambda))^2)) $
+  $= #t5(u_R_H)" m"^(-1).$
+  $ R_H = #fin_res(R_H, u_R_H) "m"^(-1) $
+  $ (R_H = #t5(R_H) ± #t5(u_R_H)) $
 }
 
-/* #let rh1 = 1/lambda1/(1/4-1/9)
-$lambda = #lambda_val $
-#let lambda1b = d * calc.sin(to_rad(tblue1))
-对于蓝光 1 级，$theta_1 = #t5(to_rad(tblue1)) "rad"$，故 $lambda_1 = d sin theta_1 = #t5(lambda1b * 1e9) "nm."$
-#let rh1b = 1/lambda1b/(1/4-1/9)
-所以
-$R_(H 1) = 1/(lambda_1(1/(2^2)-1/(3^2)))= #t5(rh1b/1e7) times 10^7 "m"^(-1).$ */
+==== 由红光计算
 
 #calc_rf("红", 1, tred1)
+
+==== 由蓝光计算
 
 #calc_rf("蓝", 1, tblue1)
 
 #calc_rf("蓝", 3, tblue3)
+
+=== 最终表述
+里德伯常数最佳测量值为
+$  $
