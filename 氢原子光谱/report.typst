@@ -198,11 +198,10 @@ $ u(d) = 3.192 ± 0.006 "μm." $
     p: 10654,
   ),
   b: (
-    m: 33329,
+    m: 30329,
     p: 28651,
   ),
 )
-
 #let red1 = (
 a: (
     m: 12628,
@@ -227,12 +226,31 @@ a: (
 $ theta_(3蓝) = #di(to_int(tblue3)) $
 $ theta_(1蓝) = #di(to_int(tblue1)) $
 $ theta_(1红) = #di(to_int(tred1)) $
+由 $k lambda = d sin theta, 得 lambda = (d sin theta) / k.$ 又
+$ R_H = 1/(lambda(1/(m^2)-1/(n^2))), $ 本实验中观察的谱线为巴尔末线系，故 $ R_H = 1/(lambda(1/4-1/(n^2))). $
+#let calc_rf(color, lv, degreef) = {
+  [对于 #color 光 #lv 级，]
+  let rad = to_rad(degreef)
+  let sin_theta = calc.sin(rad)
+  let lambda_val = d * sin_theta / lv
+  [$theta = #t5(rad) "rad"$，]
+  [故 $lambda = (d sin theta) / #lv = #t5(lambda_val * 1e9) "nm."$ ]
+  let n = if color == "红" { 3 } else { 4 }
+  [#color 光对应的 $n=#n$，]
+  let rh = 1 / lambda_val / (1/(2*2) - 1/(n*n))
+  [所以 $R_(H) = 1/(lambda(1/(2^2)-1/(#n^2))) = #t5(rh/1e7) times 10^7 "m"^(-1).$]
+}
 
-
-#let lambda1 = d * calc.sin(to_rad(tred1))
-对于红光 1 级，$theta_1 = #t5(to_rad(tred1)) "rad"$，故 $lambda_1 = d sin theta_1 = #t5(lambda1 * 1e9) "nm."$
-
-#let rh1 = 1/lambda1/(1/4-1/9)
-
+/* #let rh1 = 1/lambda1/(1/4-1/9)
+$lambda = #lambda_val $
+#let lambda1b = d * calc.sin(to_rad(tblue1))
+对于蓝光 1 级，$theta_1 = #t5(to_rad(tblue1)) "rad"$，故 $lambda_1 = d sin theta_1 = #t5(lambda1b * 1e9) "nm."$
+#let rh1b = 1/lambda1b/(1/4-1/9)
 所以
-$R_(H 1) = 1/(lambda_1(1/(2^2)-1/(3^2)))= #t5(rh1/1e7) times 10^7 "m"^(-1).$
+$R_(H 1) = 1/(lambda_1(1/(2^2)-1/(3^2)))= #t5(rh1b/1e7) times 10^7 "m"^(-1).$ */
+
+#calc_rf("红", 1, tred1)
+
+#calc_rf("蓝", 1, tblue1)
+
+#calc_rf("蓝", 3, tblue3)
