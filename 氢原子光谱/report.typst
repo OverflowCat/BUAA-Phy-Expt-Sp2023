@@ -2,9 +2,44 @@
 #let pow = calc.pow
 #let PI = calc.pi
 
-// Take a look at the file `template.typ` in the file panel
-// to customize this template and discover how it works.
+#let fin_res(res, uncert, symbol: none, unit: none) = {
+  let expn = 0
+  while uncert <= 1 {
+    uncert *= 10
+    res *= 10
+    expn -= 1
+  }
+  while uncert >= 10 {
+    uncert /= 10
+    res /= 10
+    expn += 1
+  }
+  let offset = str(calc.round(res)).len() - 1
+  if offset > 0 {
+    let tens = pow(10, offset)
+    uncert /= tens
+    res /= tens
+  }
+  res = calc.round(res, digits: offset)
+  uncert = calc.round(uncert, digits: offset)
+  let res_s = str(res)
+  let uncert_s = str(uncert)
+  while res_s.len() < uncert_s.len() {
+    res_s += "0"
+  }
+  if symbol != none {
+    $#symbol ± u(#symbol) =$
+  }
+  $(#res_s ± #uncert_s) times 10^#expn$
+  if unit != none {
+    $#unit$
+  }
+  $.$
+}
+
 #show: project.with(
+  // Take a look at the file `template.typ` in the file panel
+  // to customize this template and discover how it works.
   title: "氢原子光谱和里伯德常数的测量",
   authors: (
     (name: "OverflowCat", email: "overflowcat@gmail.com"),
@@ -102,7 +137,7 @@
   (34901, 16903, 30556, 12653),
   (31246, 13243, 26943,  8940),
   (2826 + 36000, 20725, 34502, 16501),
-  (15516, 33515, 11005, 29006),
+  (15516, 33515, 11305, 29306),
 )
 
 #table(
@@ -140,7 +175,7 @@ $ theta = #di(theta_val) $
 #let to_rad = x => PI / 180 * x
 #let theta_rad = to_rad(thetaf)
 #let sin_theta = calc.sin(theta_rad)
-#let cos_theta = calc.sin(theta_rad)
+#let cos_theta = calc.cos(theta_rad)
 #let d = 2 * 589.3 * 1e-9 / sin_theta
 
 $ d = (k lambda) / (sin theta) = (2 times 589.3 times 10^(-9)) / (sin #calc.round(thetaf, digits: 3) degree) = #{calc.round(d, digits: 10) * 1e6} "μm" $
@@ -169,7 +204,7 @@ $ = #{u_d * 1e6} "μm" $
 
 === 最终表述
 
-$ u(d) = 3.192 ± 0.006 "μm." $
+$ #fin_res(d, u_d, symbol: $d$, unit: "μm") $
 
 // #let u_d_alt = d * (u_theta / calc.tan(theta_rad))
 // $ u(d) = (cos theta)/((sin theta)^2) u(theta) = #u_d $
@@ -202,41 +237,6 @@ $ u(d) = 3.192 ± 0.006 "μm." $
     return $#sign#t5(num)times 10^#expn$
   }
 // #assert(sci(-0.0112343245) == $-1.12343 times 10^(-2)$)
-
-#let fin_res(res, uncert, symbol: none, unit: none) = {
-  let expn = 0
-  while uncert <= 1 {
-    uncert *= 10
-    res *= 10
-    expn -= 1
-  }
-  while uncert >= 10 {
-    uncert /= 10
-    res /= 10
-    expn += 1
-  }
-  let offset = str(calc.round(res)).len() - 1
-  if offset > 0 {
-    let tens = pow(10, offset)
-    uncert /= tens
-    res /= tens
-  }
-  res = calc.round(res, digits: offset)
-  uncert = calc.round(uncert, digits: offset)
-  let res_s = str(res)
-  let uncert_s = str(uncert)
-  while res_s.len() < uncert_s.len() {
-    res_s += "0"
-  }
-  if symbol != none {
-    $#symbol ± u(#symbol) =$
-  }
-  $(#res_s ± #uncert_s) times 10^#expn$
-  if unit != none {
-    $#unit$
-  }
-  $.$
-}
 
 === 数据列表
 
@@ -349,16 +349,16 @@ $
 === 最佳测量值
 
 #let r_data = (
-  (11448118.610513207, 23565.92480843606),
-  (11556246.299750695, 24221.61351520756),
-  (11425017.806330556, 69337.22953908592),
-)
+  (11297078.796975119, 20627.191987746537),
+  (11403779.912416829, 21302.696387947028),
+  (11274282.771356964, 60398.54201962311),
+) // 此处的数据需要用鼠标中键垂直选中后，鼠标悬浮在 R_H, u_R_H 上，选中弹出的提示，右键复制文本，把数据复制过来．
 
 #let 分子各项 = r_data.map(x => $#calc.round(x.at(0)) / #calc.round(x.at(1)) ^2$)
 #let 分母各项 = r_data.map(x => $1 / #calc.round(x.at(1)) ^2$)
 #let 分子 = r_data.map(x => x.at(0) / pow(x.at(1), 2)).fold(0, (x, y) => x + y)
 #let 分母 = r_data.map(x => 1 / pow(x.at(1), 2)).fold(0, (x, y) => x + y)
-#let u_R_avg = 分子/分母
+#let R_H_avg = 分子/分母
 #let u_R_H_avg = 1/pow(分母, .5)
 
 由公式 $λ= (d sin theta) / k$ 知 $u(lambda)$ 与级数 $k$ 有关，即不同级数的波长测量精度不同，须加权平均：
@@ -368,9 +368,37 @@ overline(R)
 = (sum (R_(H i))/(u^2 (R_(H i)))) / (sum 1/(u^(2) (R_(H i))))
 = #分子各项.join($+$) / #分母各项.join($+$)
 $
-$ = #t5(分子) / #sci(分母) = #calc.round(u_R_avg). $
+$ = #t5(分子) / #sci(分母) = #calc.round(R_H_avg). $
 $ u(overline(R_H))= sqrt(1 / (sum 1/(u^2 (R_(H i))))) $
 $ = (#分母各项.join($+$))^(-1/2) = #t5(u_R_H_avg). $
 
 里德伯常数最佳测量值为
-$ #fin_res(u_R_avg, u_R_H_avg, symbol: $overline(R_"H")$, unit: $ "m"^(-1)$) $
+$ #fin_res(R_H_avg, u_R_H_avg, symbol: $overline(R_"H")$, unit: $ "m"^(-1)$) $
+
+=== 误差分析
+
+#let R_theo = 1.0973731569 * 1e7
+
+与里德伯常数标准值 $R_(H 标 准) = #{R_theo * 1e-7} times 10^(7) "m"^(-1)$ 相比较，其相对误差为
+$ δ=|R_(H)-R_(H 标 准)|/R_(H 标 准) times 100% = #t5(calc.abs(R_H_avg - R_theo)/R_theo*100)%. $
+
+== 钠黄光的角色散率和分辨率本领
+
+#{
+  let k = 2
+  let D_theta_k = k / (d * cos_theta)
+  $ k = #k, "角色散率" D_(theta #k) = (diff theta) / (diff lambda) = k / (d cos theta) = #k / (#sci(d) times #t5(cos_theta)) = #t5(D_theta_k) "rad/m". $
+  let 通光口径 = 2.20 * 1e-2
+  let 色分辨率 = 1 * 通光口径 / d
+  [
+    平行光管的通光口径 $D=2.20 "cm"$，光栅的色分辨率为
+    $ R = k N = (k D)/d = (1 times 0.0220) / #sci(d) = #t5(色分辨率). $
+    当 $R=k N > lambda / (diff lambda)$ 时，说明波长为 $lambda$，波长差为 $diff lambda$ 的两束光可以被分辨．
+    $ lambda / (diff lambda) = 589.3 / 0.6 = #t5(589.3/.6) << #t5(色分辨率) = R, $
+    这一计算结果表明钠黄光的双线可以被分开．
+  ]
+}
+
+= 思考题
+
+1. 虽然光栅可以分开钠黄光的双线，但实验中并没有观察到这一现象．实际上人眼无法分辨，所以本实验不能将钠黄光的双线分开．(证明方法见 `README.md`)
