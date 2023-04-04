@@ -2,6 +2,32 @@
 #let pow = calc.pow
 #let PI = calc.pi
 
+#let to_int(degreef) = {
+  let min = calc.mod(degreef, 1) * 60
+  int(int(degreef) * 100 + min)
+}
+
+#let t5(f) = calc.round(f, digits: 5)
+
+#let sci(num) = {
+    if calc.abs(num) >= 0.1 {
+      return $#t5(num)$
+    }
+    let sign = if num < 0 {
+      num *= -1
+      "-"
+    } else {
+      ""
+    }
+    let expn = 0
+    while num < 1 {
+      num *= 10
+      expn -= 1
+    }
+    return $#sign#t5(num)times 10^#expn$
+  }
+// #assert(sci(-0.0112343245) == $-1.12343 times 10^(-2)$)
+
 #let fin_res(res, uncert, symbol: none, unit: none) = {
   let expn = 0
   while uncert <= 1 {
@@ -19,13 +45,14 @@
     let tens = pow(10, offset)
     uncert /= tens
     res /= tens
+    expn += offset
   }
   res = calc.round(res, digits: offset)
   uncert = calc.round(uncert, digits: offset)
   let res_s = str(res)
   let uncert_s = str(uncert)
   while res_s.len() < uncert_s.len() {
-    res_s += "0"
+    res_s += "0" // 补末位 0
   }
   if symbol != none {
     $#symbol ± u(#symbol) =$
@@ -138,7 +165,7 @@
   (31246, 13243, 26943,  8940),
   (2826 + 36000, 20725, 34502, 16501),
   (15516, 33515, 11305, 29306),
-)
+) // 下面还有一处需要修改
 
 #table(
   columns: (auto, auto, auto, auto, auto, auto),
@@ -186,57 +213,33 @@ $ d = (k lambda) / (sin theta) = (2 times 589.3 times 10^(-9)) / (sin #calc.roun
 $ u_"a"(2 theta) = sqrt(sum (theta_i - overline(theta))/(5 times 4))$
 $ = sqrt(#{"(" + diffs.map(x => calc.round(x, digits: 3)).map(str).join(")² + (") + ")²"} / (5 times 4)) $
 #let u_a_2theta = calc.sqrt(diffs.map(x => pow(x, 2)).fold(0, (x, y) => x + y) / (5 * 4))
-$ = #u_a_2theta "rad." $
+$ = #sci(u_a_2theta) "rad." $
 
-$ u_"b"(2 theta) = Delta_(2 theta) / (2 sqrt(3)) = (1') / (2 sqrt(3)) = 8.397219 times 10^(-5) "rad." $
+#let u_b_2theta = to_rad(1/60) / (1 * calc.sqrt(3))
+$ u_"b"(2 theta) = Delta_(2 theta) / (sqrt(3)) /* times 1/2 */ = (1') / sqrt(3) /* times 1/2 */ = #sci(u_b_2theta) "rad." $
+// !!! 注意这里如果是 u_b(theta) 才有 1/2，因为 theta = |theta_(+) - theta_(-)|/2. 参见下面计算 Rydberg 常量的时候
+// 不过倒是对最后的不确定度那一位贡献不大
 
-#let u_b_2theta = to_rad(1/60) / (2 * calc.sqrt(3))
 #let u_2theta = calc.sqrt(u_a_2theta * u_a_2theta + u_b_2theta * u_b_2theta)
-$ u(2 theta) = sqrt((u_"a"(theta))^2 + (u_"b"(theta))^2) = #u_2theta "rad." $
+$ u(2 theta) = sqrt((u_"a"(theta))^2 + (u_"b"(theta))^2) = #sci(u_2theta) "rad." $
 #let u_theta = 1/2 * u_2theta
-$ u(theta) = u_2theta / 2 = #u_theta "rad." $
+$ u(theta) = u_2theta / 2 = #sci(u_theta) "rad." $
 // #let u_d = calc.round(calc.sqrt(pow(2 * 589.3 * 1e-9 * calc.cos(theta_rad) / calc.sin(theta_rad) * u_theta, 2)), digits: 14)
 
-$ u(d) = sqrt(((diff d) / (diff theta)) ^ 2 u^2(theta)) = sqrt((-(k lambda cos x)/(sin^2 x)) ^ 2 u^2(theta)). $
+$ u(d) = sqrt(((diff d) / (diff theta)) ^ 2 u^2(theta)) = sqrt((-(k lambda cos θ)/(sin^2 θ)) ^ 2 u^2(θ)) $
 #let u_d = calc.sqrt(pow(-2 * 589.3 * 1e-9 * cos_theta / sin_theta / sin_theta, 2) * pow(u_theta, 2))
-$ = #calc.round(u_d, digits: 14) $
-$ = #{u_d * 1e6} "μm" $
+$ = #t5(u_d * 1e9) "nm."
+=#sci(u_d) "m".$
 
 === 最终表述
 
-$ #fin_res(d, u_d, symbol: $d$, unit: "μm") $
+$ #fin_res(d, u_d, symbol: $d$, unit: "m") $
 
 // #let u_d_alt = d * (u_theta / calc.tan(theta_rad))
 // $ u(d) = (cos theta)/((sin theta)^2) u(theta) = #u_d $
 // $ = #{u_d_alt * 1e6} "μm" $
 
 == 氢原子光谱
-
-#let to_int(degreef) = {
-  let min = calc.mod(degreef, 1) * 60
-  int(int(degreef) * 100 + min)
-}
-
-#let t5(f) = calc.round(f, digits: 5)
-
-#let sci(num) = {
-    if calc.abs(num) >= 0.1 {
-      return $#t5(num)$
-    }
-    let sign = if num < 0 {
-      num *= -1
-      "-"
-    } else {
-      ""
-    }
-    let expn = 0
-    while num < 1 {
-      num *= 10
-      expn -= 1
-    }
-    return $#sign#t5(num)times 10^#expn$
-  }
-// #assert(sci(-0.0112343245) == $-1.12343 times 10^(-2)$)
 
 === 数据列表
 
@@ -288,36 +291,37 @@ $ theta_(1红) = #di(to_int(tred1)) $
 === 计算里德伯常数
 
 由 $k lambda = d sin theta, 得 lambda = (d sin theta) / k.$ 又
-$ R_H = 1/(lambda(1/(m^2)-1/(n^2))), $ 本实验中观察的谱线为巴尔末线系，故 $ R_H = 1/(lambda(1/4-1/(n^2))). $
-$ u_"b"(theta) = Delta_(theta) / sqrt(3) ⋅ 1 / 2 = (1') / (2 sqrt(3)) = 8.3972 times 10^(-5) "rad." $
+$ R_H = 1/(lambda(1/(m^2)-1/(n^2))), $ 本实验中观察的谱线为巴尔末线系，$n=2$，故 $ R_H = 1/(lambda(1/4-1/(n^2))). $
+本实验中，每个颜色的每级谱线仅测量一次，故
 #let u_b_theta = to_rad(1/60) / (2 * calc.sqrt(3))
-$u(theta) = u_"b"(theta) = #u_b_theta$.
-$ u(λ) = sqrt(
+$ u(θ_i) = u_"b"(theta) = Delta_(θ_i) / sqrt(3) ⋅ 1 / 2 = (1') / (2 sqrt(3)) = 8.3972 times 10^(-5) "rad." $
+$ u(λ_i) = sqrt(
     ((diff λ) / (diff d)) ^2 u^2(d) +
-     ((diff λ) / (diff θ)) ^2 u^2 θ
+     ((diff λ) / (diff θ_i)) ^2 u^2 θ_i
   ) = sqrt(
-    sin^2 overline(θ)_1 (u(d))^2 +
-    (d cos overline(θ))^2 u^2(overline(θ)))
+    sin^2 θ_i (u(d))^2 +
+    (d cos θ_i)^2 u^2(θ_i))
   ).
 $
 $
-u(R_"H")
-= sqrt(((diff R_H)/(diff λ))^2 u^2(λ))
-= 1/(1/(m^2) - 1/(n^2)) sqrt((-1/(λ^2))^2 u^2(λ))
-= 1/(1/4 - 1/(n^2)) sqrt((-1/(λ^2))^2 u^2(λ))
+u(R_("H"i))
+= sqrt(((diff R_("H"i))/(diff λ_i))^2 u^2(λ_i))
+= sqrt(1/(1/(m^2) - 1/(n^2)) (-1/(λ_i^2))^2 u^2(λ_i))
+= 1/(1/4 - 1/(n^2)) |-u(λ_i)/(λ_i^2) |
 $
 
 #let calc_rf(color, lv, degreef) = {
   let R_name = $R_(H#lv#color)$
   let θ_name = $θ_(#lv#color)$
   let λ_name = $λ_(#lv#color)$
+  [==== #{"由" + color + "光"} #lv 级计算]
   [#{"对于" + color + "光"} #lv 级，]
   let rad = to_rad(degreef)
   let sin_theta = calc.sin(rad)
   let cos_theta = calc.cos(rad)
   let lambda_val = d * sin_theta / lv
   [$#θ_name = #t5(rad) "rad"$，]
-  [故 $#λ_name = (d sin theta) / #lv = #t5(lambda_val * 1e9) "nm."$ ]
+  [故 $#λ_name = (d sin #θ_name) / #lv = #t5(lambda_val * 1e9) "nm."$ ]
   let n = if color == "红" { 3 } else { 4 }
   [#color 光对应的 $n=#n$，]
   let R_H = 1 / lambda_val / (1/(2*2) - 1/(n*n))
@@ -330,17 +334,13 @@ $
   sqrt(#sci(sin_theta)^2 (#sci(u_d))^2 +
   (#sci(d) times #sci(cos_theta))^2 (#sci(u_theta))^2) $
   $= #sci(u_lambda)" m".$
-  $ u(#R_name) = 1/(1/(2^2) - 1/(#n^2)) sqrt((-((#sci(lambda_val))^2)^(-2) (#sci(u_lambda))^2)) $
-  $= #t5(u_R_H)" m"^(-1).$
+  $ u(#R_name) = 1/(1/(2^2) - 1/(#n^2)) #sci(u_lambda) / (#sci(lambda_val))^2 $
+  $= #calc.round(u_R_H)" m"^(-1).$
   $ #fin_res(R_H, u_R_H, symbol: $#R_name$, unit: $"m"^(-1)$) $
   $ (#R_name = #t5(R_H) ± #t5(u_R_H)) $
 }
 
-==== 由红光计算
-
 #calc_rf("红", 1, tred1)
-
-==== 由蓝光计算
 
 #calc_rf("蓝", 1, tblue1)
 
@@ -349,9 +349,9 @@ $
 === 最佳测量值
 
 #let r_data = (
-  (11297078.796975119, 20627.191987746537),
-  (11403779.912416829, 21302.696387947028),
-  (11274282.771356964, 60398.54201962311),
+  (11297078.796975119, 20733.80762789463),
+  (11403779.912416829, 21407.90265727418),
+  (11274282.771356964, 60724.88317105589),
 ) // 此处的数据需要用鼠标中键垂直选中后，鼠标悬浮在 R_H, u_R_H 上，选中弹出的提示，右键复制文本，把数据复制过来．
 
 #let 分子各项 = r_data.map(x => $#calc.round(x.at(0)) / #calc.round(x.at(1)) ^2$)
@@ -368,7 +368,7 @@ overline(R)
 = (sum (R_(H i))/(u^2 (R_(H i)))) / (sum 1/(u^(2) (R_(H i))))
 = #分子各项.join($+$) / #分母各项.join($+$)
 $
-$ = #t5(分子) / #sci(分母) = #calc.round(R_H_avg). $
+$ = #t5(分子) / #sci(分母) = #calc.round(R_H_avg) "m"^(-1). $
 $ u(overline(R_H))= sqrt(1 / (sum 1/(u^2 (R_(H i))))) $
 $ = (#分母各项.join($+$))^(-1/2) = #t5(u_R_H_avg). $
 

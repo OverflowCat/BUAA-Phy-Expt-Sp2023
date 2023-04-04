@@ -80,9 +80,13 @@
 
 ### 1. 本实验能否将钠黄光的双线分开，为什么？怎样才能把它们分开？
 
+虽然光栅可以分开钠黄光的双线，但实验中并没有观察到这一现象．其原因是人的肉眼无法分辨．
+
 可以根据<ruby>瑞利判据<rp>（</rp><rt>Rayleigh criterion</rt><rp>）</rp></ruby>计算人眼分辨率限制．在明亮的环境下，人眼的瞳孔直径通常约为 $2～4\ \mathrm{mm}$，取**光学系统的孔径** $D=2\ \mathrm{mm}$．实验中所用**钠黄光波长** $\lambda=589.3\ \mathrm{nm}$．故
 
 $$ \theta = 1.22 \cdot \frac{\lambda}{D} = 1.22 \times \frac{ 589.3 \times 10^{-9}} { 2 \times 10^3} = 0.00035947\ \mathrm{rad} = 1.24'.$$
+
+而钠黄双线之间的角间距为 $\Delta\theta_{\Delta\lambda}=\dfrac{\Delta\theta_{\Delta\lambda}}{\Delta\lambda}\Delta\lambda=D_\theta\cdot\Delta\lambda=663880 \times 0.6 \times 10^{-9}=3.98328 \times 10^{-4}\ \mathrm{rad}.$
 
 <!-- TODO -->
 
