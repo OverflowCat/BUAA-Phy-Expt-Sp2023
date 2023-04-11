@@ -1,0 +1,50 @@
+= 双棱镜和劳埃镜干涉
+
+#let successive(data) = {
+  assert(calc.mod(data.len(), 2) == 0)
+  let res = ()
+  let i = 0
+  while i < data.len() / 2 {
+    res.push(data.at(i + 10) - data.at(i))
+    i += 1
+  }
+  res
+}
+#let sum(nums) = nums.fold(0, (x, y) => x + y)
+#let avg(nums) = sum(nums) / nums.len()
+
+#let L_1 = 55.02
+#let L_2 = 74.37
+#let K = 20.10
+#let K_Delta = +1.20 // 修正值
+#let S  = L_2 - (K + K_Delta)// .~~5435~~ 5307 m
+#S 送
+#let S_ = L_1 - (K + K_Delta)// .3372 m
+$ S = #S, S'= #S_ $
+#let x_i = (
+  7.438, 7.179, 6.878, 6.597, 6.297, 6.099, 5.841, 5.598, 5.288, 5.062,
+  4.767, 4.485, 4.187, 3.966, 3.658, 3.388, 3.142, 2.830, 2.601, 2.343
+)
+
+#let delta_xs = successive(x_i).map(x => calc.round(x, digits: 5))
+
+#let abs = calc.abs
+#let avg_x = abs(avg(delta_xs)) / 10 // mm
+
+== 条纹间距
+
+$Delta x: #avg_x "mm"$
+
+== 计算
+
+#let b = avg((calc.abs(2.538 - 5.902), calc.abs(2.519 - 5.849)))
+#let b_ = avg((calc.abs(3.898 - 5.167), calc.abs(3.788 - 5.060)))
+
+#let lambda = avg_x* 1e-3 * calc.sqrt(b*1e-3 * b_*1e-3) / (S/100 + S_/100)
+
+$ λ = (Delta x sqrt(b b'))/(S + S') = #{lambda*1e9} "nm" $
+
+#let lambda_标准 = 650 * 1e-9
+#let 误差 = calc.abs(lambda - lambda_标准)/lambda_标准*100
+
+$ "误差" = #误差% $

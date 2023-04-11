@@ -45,7 +45,7 @@ $$
     <td>$\Theta_2$</td>
   </tr>
   <tr>
-    <td rowspan="4">圆铜盘</td>
+    <td rowspan="4">加热盘</td>
     <td>质量</td>
     <td>$m_P$</td>
     <td>电子天平</td>
@@ -66,7 +66,7 @@ $$
     <td>$h_P$</td>
   </tr>
   <tr>
-    <td rowspan="2">圆盘样品</td>
+    <td rowspan="2">样品盘</td>
     <td>直径</td>
     <td>$d_B$</td>
   </tr>
