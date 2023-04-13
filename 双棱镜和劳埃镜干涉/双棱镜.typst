@@ -41,9 +41,9 @@
 #let K = 20.10
 #let K_Delta = +1.20 // 修正值
 #let S  = L_2 - (K + K_Delta) // .~~5435~~ 5307 m
-#S 送
 #let S_ = L_1 - (K + K_Delta) // .3372 m
 $ S = #S, S'= #S_ $
+// 单位换算，注意是从厘米到米
 #let S_plus_S_meter = (S + S_) / 100
 
 #let x_i = (
@@ -113,7 +113,6 @@ $ u(b) = #sci(u__b) "m", u(b') = #sci(u__b_) "m" $
 • 游标卡尺 游标精度
 • 测微目镜有套筒 是千分尺
 */
-#u_b_D
 
 // 单位换算．下次还是都用 mm 好了，老是弄错，麻了
 #let b  = b  * 1e-3
@@ -123,10 +122,10 @@ $ u(b) = #sci(u__b) "m", u(b') = #sci(u__b_) "m" $
 #let u_S_plus_S_ = 0.5e-3 / calc.sqrt(3)
 #let sq = x => calc.pow(x, 2)
 
-#let result = calc.sqrt(
-  sq(u_delta_x / delta_x) + sq(u__b / b) + sq(u__b_ / b_)
-  + sq(u_S_plus_S_ / S_plus_S_meter)
-)
+#let _u_comps = (u_delta_x / delta_x, u__b / b, u__b_ / b_, u_S_plus_S_ / S_plus_S_meter)
+#let _squared_u_comps = _u_comps.map(sq)
+#let result = calc.sqrt(sum(_squared_u_comps))
+// sq(u_delta_x / delta_x) + sq(u__b / b) + sq(u__b_ / b_) + sq(u_S_plus_S_ / S_plus_S_meter)
 
 #let u_lambda = result * lambda
 
@@ -169,4 +168,9 @@ $ u(λ) = #sci(u_lambda) = #{u_lambda * 1e9} "nm". $
   $.$
 }
 
-$ #fin_res(lambda, u_lambda, symbol: $λ$, unit: "nm") $
+$ #fin_res(lambda, u_lambda, symbol: $λ$, unit: " m") $
+
+== 思考题
+
+1. 根据你的测量数据，定量讨论哪个（些）量的测量对结果准确度的影响最大？原因何在？
+2. 请查阅文献例举分波前干涉实验的现代应用及原理（至少 2 条）．
