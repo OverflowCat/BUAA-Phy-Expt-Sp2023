@@ -1,0 +1,55 @@
+#let N = 100
+#let d_i = (55.05000, 55.08649, 55.11875, 55.15045, 55.18171,
+55.21320, 55.24510, 55.27655, 55.30844, 55.34005)
+
+#let 逐差 = (data) => {
+  let half = int(data.len() / 2)
+  let counter = 0
+  let res = ()
+  for value in data {
+    if counter == half {
+      break
+    }
+    let diff = data.at(counter + half) - value
+    res.push(calc.round(diff, digits: 8))
+    counter += 1
+  }
+  res
+}
+
+#let avg = (data) => {
+  data.sum() / data.len()
+}
+
+// cut
+#let c2 = x => calc.round(x, digits: 2)
+#let c6 = x => calc.round(x, digits: 6)
+#let c8 = x => calc.round(x, digits: 8)
+
+#let delta_d_i = 逐差(d_i)
+
+$N = #N$
+#table(
+  columns: (auto, auto, auto, auto, auto, auto),
+  inset: 10pt,
+  align: horizon,
+  $i$, [1], [2], [3], [4], [5],
+  $d_i$, ..(0,1,2,3,4).map(i => $#d_i.at(i)$),
+  $i$, [6], [7], [8], [9], [10],
+  $d_i$, ..(0,1,2,3,4).map(i => $#d_i.at(i+5)$),
+  $Delta d_i$, ..(0,1,2,3,4).map(i => $Delta d_#str(i+1)$),
+  $d_(i+5) - d_i"/mm"$, ..delta_d_i.map(x => $#x$)
+)
+
+#let delta_d = delta_d_i.sum() / delta_d_i.len() / delta_d_i.len()
+
+$ Delta d = (Delta d_1 + Delta d_2 + Delta d_3 + Delta d_4 + Delta d_5) / (5 times 5) = #c8(delta_d) "mm." $
+
+#let lambda_ = 2 * delta_d / N
+#let lambda_nm = c8(lambda_*1e6)
+
+$ lambda = (2 Delta d) / N = #c8(lambda_) = #lambda_nm "nm". $
+
+#let 相对误差 = calc.abs((lambda_nm - 632.8) / 632.8) * 100
+
+$ "相对误差" = (#lambda_nm - 632.8) / 632.8 = #c2(相对误差)%. $
