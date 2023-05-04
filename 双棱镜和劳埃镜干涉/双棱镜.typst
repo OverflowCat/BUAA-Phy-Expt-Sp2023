@@ -24,7 +24,7 @@
 }
 
 #let successive(data) = {
-  assert(calc.mod(data.len(), 2) == 0)
+  assert(calc.rem(data.len(), 2) == 0)
   let res = ()
   let i = 0
   while i < data.len() / 2 {
@@ -44,7 +44,7 @@
 #let S_ = L_1 - (K + K_Delta) // .3372 m
 $ S = #S, S'= #S_ $
 // 单位换算，注意是从厘米到米
-#let S_plus_S_meter = (S + S_) / 100
+#let S_plus_S_meter = (S + S_) / 100 * 1
 
 #let x_i = (
   7.438, 7.179, 6.878, 6.597, 6.297, 6.099, 5.841, 5.598, 5.288, 5.062,
@@ -54,7 +54,7 @@ $ S = #S, S'= #S_ $
 #let delta_10xs = successive(x_i).map(x => calc.round(x, digits: 5)).map(calc.abs)
 
 #let abs = calc.abs
-#let delta_x = abs(avg(delta_10xs)) / 10 // mm
+#let delta_x = abs(avg(delta_10xs)) / 10 * 1 // mm *
 
 == 条纹间距
 
@@ -62,7 +62,7 @@ $Delta x: #delta_x "mm"$
 
 == 计算
 
-#let b = avg((calc.abs(2.538 - 5.902), calc.abs(2.519 - 5.849)))
+#let b = avg((calc.abs(2.538 - 5.902), calc.abs(2.519 - 5.849))) * 1
 #let b_ = avg((calc.abs(3.898 - 5.167), calc.abs(3.788 - 5.060)))
 
 #let lambda = delta_x * 1e-3 * calc.sqrt(b*1e-3 * b_*1e-3) / S_plus_S_meter
@@ -95,7 +95,7 @@ $ u_b(Delta_(10) x) = #sci(u_b) "m" $
 $ u_a(Delta_(10) x) = #sci(u_a) "m" $
 #let u = calc.sqrt(u_a*u_a + u_b*u_b)
 $ u(Delta_(10) x) = #sci(u) "m" $
-#let u_delta_x = u / 10
+#let u_delta_x = u / 10 * 1
 $ u(Delta x) = #sci(u_delta_x) "m" $
 
 #let u_b_b = u_b

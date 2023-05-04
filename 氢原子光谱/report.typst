@@ -3,7 +3,7 @@
 #let PI = calc.pi
 
 #let to_int(degreef) = {
-  let min = calc.mod(degreef, 1) * 60
+  let min = calc.rem(degreef, 1) * 60
   int(int(degreef) * 100 + min)
 }
 
@@ -67,7 +67,7 @@
 #show: project.with(
   // Take a look at the file `template.typ` in the file panel
   // to customize this template and discover how it works.
-  title: "氢原子光谱和里伯德常数的测量",
+  title: "氢原子光谱和里德伯常数的测量",
   authors: (
     (name: "OverflowCat", email: "overflowcat@gmail.com"),
   ),
@@ -81,7 +81,7 @@
 
 #let di(int) = {
   let deg = calc.floor(int / 100)
-  $deg degree #calc.mod(int, 100)'$
+  $deg degree #calc.rem(int, 100)'$
 }
 
 #let getdigit(angle) = {
@@ -94,9 +94,9 @@
 
 #let sum_angles(angle1, angle2) = {
     let angle1_deg = getdigit(angle1)
-    let angle1_min = calc.mod(angle1, 100)
+    let angle1_min = calc.rem(angle1, 100)
     let angle2_deg = getdigit(angle2)
-    let angle2_min = calc.mod(angle2, 100)
+    let angle2_min = calc.rem(angle2, 100)
     let degree_sum = angle1_deg + angle2_deg
     let minute_sum = angle1_min + angle2_min
     while minute_sum >= 60 {
@@ -130,10 +130,10 @@
   assert(coe >= 0, message: "Coeff should be geq than 0")
   let aangle = calc.abs(angle)
   let angle_deg = getdigit(angle)
-  let angle_min = calc.mod(angle, 100)
+  let angle_min = calc.rem(angle, 100)
   angle_deg *= coe
   angle_min *= coe
-  angle_min += calc.mod(angle_deg, 1) * 60
+  angle_min += calc.rem(angle_deg, 1) * 60
   angle_deg = calc.floor(angle_deg)
   angle_deg * 100 + calc.round(angle_min)
 }
@@ -142,7 +142,7 @@
 
 #let to_degreef(angle) = {
   let angle_deg = getdigit(angle)
-  let angle_min = calc.mod(angle, 100)
+  let angle_min = calc.rem(angle, 100)
   angle_deg += angle_min / 60
   angle_deg
 }
