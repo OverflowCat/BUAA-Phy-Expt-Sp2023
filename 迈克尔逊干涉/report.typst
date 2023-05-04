@@ -25,7 +25,27 @@
 #let c2 = x => calc.round(x, digits: 2)
 #let c6 = x => calc.round(x, digits: 6)
 #let c8 = x => calc.round(x, digits: 8)
-
+#let c5(f) = calc.round(f, digits: 5)
+#let sci(num) = {
+  if num < 0.000000000001 {
+    return num
+  }
+  if calc.abs(num) >= 0.1 {
+    return $#c5(num)$
+  }
+  let sign = if num < 0 {
+    num *= -1
+    "-"
+  } else {
+    ""
+  }
+  let expn = 0
+  while num < 1 {
+    num *= 10
+    expn -= 1
+  }
+  return $#sign#c5(num)times 10^#expn$
+}
 #let delta_d_i = 逐差(d_i)
 
 $N = #N$
@@ -53,3 +73,20 @@ $ lambda = (2 Delta d) / N = #c8(lambda_) = #lambda_nm "nm". $
 #let 相对误差 = calc.abs((lambda_nm - 632.8) / 632.8) * 100
 
 $ "相对误差" = (#lambda_nm - 632.8) / 632.8 = #c2(相对误差)%. $
+
+=== 不确定度
+
+#let sq = x => calc.pow(x, 2)
+
+#let delta_d_i_avg = avg(delta_d_i)
+#let u_a_mm = calc.sqrt(delta_d_i.map(x => sq(x - delta_d_i_avg)).sum() / (5 * 4)) * 1e3
+
+$ u_a(Delta d) = sqrt((sum(Delta d_i - overline(Delta d))^2)/(5 times 4)) = #c5(u_a_mm) "mm". $
+
+#let u_b_mm = 5e-5/calc.sqrt(3)
+$ u_b(Delta d) = Delta_仪/sqrt(3) = #sci(u_b_mm) "mm". $
+
+#let u_mm = calc.sqrt(sq(u_a_mm) + sq(u_b_mm))
+
+$ u(Delta d) = sqrt(u_a^2(Delta d) + u_b^2(Delta d)) = #c5(u_mm) "mm," $
+
