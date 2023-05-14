@@ -1,54 +1,16 @@
-#let N = 100
-// #let d_i = (55.00000, 55.03458, 55.06640, 55.09297, 55.12003, 55.15090, 55.19368, 55.22506, 55.25732, 55.28862)
+// ========================
+// 填写你的实验数据
+#let N = 100 // 条纹间隔数
+#let d_i = (55.00000, 55.03458, 55.06640, 55.09297, 55.12003, 55.15090, 55.19368, 55.22506, 55.25732, 55.28862) // 逐差法记录的实验数据
+// Other data:
 // #let d_i = (55.05000, 55.08649, 55.11875, 55.15045, 55.18171, 55.21320, 55.24510, 55.27655, 55.30844, 55.34005)
 // #let d_i = (54.04000, 54.07185, 54.10363, 54.13540, 54.16767, 54.20000, 54.23215, 54.26392, 54.29560, 54.32775)
-// #let d_i = (51.62000, 51.65242, 51.68486, 51.71693, 51.74861, 51.78051, 51.81233, 51.84357, 51.87528, 51.90672)
-#let d_i = (54.33550, 54.36760, 54.39978, 54.43289, 54.46605, 54.49792, 54.52948, 54.56099, 54.59280, 54.62401)
+// #let d_i = (51.62000, 51.65242, 51.68486, 51.71693, 51.74861, 51.78051, 51.81233, 51.84357, 51.87528, 51.90672) // correct
+// #let d_i = (54.33550, 54.36760, 54.39978, 54.43289, 54.46605, 54.49792, 54.52948, 54.56099, 54.59280, 54.62401
+// ========================
 
-#let 逐差 = (data) => {
-  let half = int(data.len() / 2)
-  let counter = 0
-  let res = ()
-  for value in data {
-    if counter == half {
-      break
-    }
-    let diff = data.at(counter + half) - value
-    res.push(calc.round(diff, digits: 8))
-    counter += 1
-  }
-  res
-}
+#import "util.typ": sci, fin_res, c2, c5, c8, avg, 逐差
 
-#let avg = (data) => {
-  data.sum() / data.len()
-}
-
-// cut
-#let c2 = x => calc.round(x, digits: 2)
-#let c6 = x => calc.round(x, digits: 6)
-#let c8 = x => calc.round(x, digits: 8)
-#let c5(f) = calc.round(f, digits: 5)
-#let sci(num) = {
-  if num < 0.000000000001 {
-    return num
-  }
-  if calc.abs(num) >= 0.1 {51.62000
-    return $#c5(num)$
-  }
-  let sign = if num < 0 {
-    num *= -1
-    "-"
-  } else {
-    ""
-  }
-  let expn = 0
-  while num < 1 {
-    num *= 10
-    expn -= 1
-  }
-  return $#sign#c5(num)times 10^#expn$
-}
 #let delta_5_d_i = 逐差(d_i)
 
 $N = #N$
@@ -93,11 +55,14 @@ $ "相对误差" = (#lambda_nm - 632.8) / 632.8 = #c2(相对误差)%. $
 
 #let sq = x => calc.pow(x, 2)
 
+/*
+#let delta_d_i_avg = avg(delta_d_i)
+#let u_a_mm = calc.sqrt(delta_d_i.map(x => sq(x - delta_d_i_avg)).sum() / (delta_d_i.len() - 1))
+$ u_a(Delta d) = sqrt((sum(Delta d_i - overline(Delta d))^2) / (#delta_d_i.len() - 1)) = #sci(u_a_mm) "mm". $
+*/
+
 #let delta_5_d_i_avg = avg(delta_5_d_i)
-// 注意此处 Delta d 是 5 倍的还是 1 倍的！
-
 #let u_a_mm = calc.sqrt(delta_5_d_i.map(x => sq((x - delta_5_d_i_avg)/5)).sum() / (5 * 4))
-
 $ u_a(Delta d) = sqrt((sum(Delta_5 d_i - overline(Delta_5 d))^2)/(5 times 4)) = #sci(u_a_mm) "mm". $
 
 #let u_b_mm = 1e-5/calc.sqrt(3)
@@ -110,51 +75,15 @@ $ u(Delta d) = sqrt(u_a^2(Delta d) + u_b^2(Delta d)) = #sci(u_mm) "mm," $
 条纹连续读数误差 $Delta N <= 1.$
 
 #let delta_N = 1
-#let u_N = 1/5 * delta_N / calc.sqrt(3)
+#let u_N = 1/5 * delta_N / calc.sqrt(3) // 注意这里的 1/5！
 $ u(N) = 1/5 dot (Delta N) / sqrt(3) = #c5(u_N). $
 
 #let u_lambda_div_lambda = calc.sqrt(sq(u_mm/delta_d) + sq(u_N/N))
 $ u(lambda)/lambda = sqrt((u(Delta d)/(Delta d))^2 + (u(N)/N)^2) = #sci(u_lambda_div_lambda). $
 #let u_lambda = u_lambda_div_lambda * lambda_
-$ u(lambda) = lambda dot u(lambda)/lambda = #sci(u_lambda). $
+$ u(lambda) = lambda dot u(lambda)/lambda = #sci(u_lambda) "mm". $
 
 最终表述：
-
-#let fin_res(res, uncert, symbol: none, unit: none) = {
-  let expn = 0
-  while uncert <= 1 {
-    uncert *= 10
-    res *= 10
-    expn -= 1
-  }
-  while uncert >= 10 {
-    uncert /= 10
-    res /= 10
-    expn += 1
-  }
-  let offset = str(calc.round(res)).len() - 1
-  if offset > 0 {
-    let tens = calc.pow(10, offset)
-    uncert /= tens
-    res /= tens
-    expn += offset
-  }
-  res = calc.round(res, digits: offset)
-  uncert = calc.round(uncert, digits: offset)
-  let res_s = str(res)
-  let uncert_s = str(uncert)
-  while res_s.len() < uncert_s.len() {
-    res_s += "0" // 补末位 0
-  }
-  if symbol != none {
-    $#symbol ± u(#symbol) =$
-  }
-  $(#res_s ± #uncert_s) times 10^#expn$
-  if unit != none {
-    $#unit$
-  }
-  $.$
-}
 
 #fin_res(lambda_, u_lambda, symbol: $lambda$, unit: " mm")
 
