@@ -43,7 +43,7 @@ $ lambda = (2 Delta d) / N = (2 times #c5(delta_d)) / #N= #c8(lambda_) = #lambda
 $ "相对误差" = (#lambda_nm - 632.8) / 632.8 = #c2(相对误差)%. $
 
 === 不确定度
-
+/*
 #let delta_d_i = delta_5_d_i.map(x => x/5)
 #table(
   columns: (auto, auto, auto, auto, auto, auto),
@@ -52,6 +52,7 @@ $ "相对误差" = (#lambda_nm - 632.8) / 632.8 = #c2(相对误差)%. $
   [$i$], [1], [2], [3], [4], [5],
   [$Delta d_i$], ..delta_d_i.map(x=>[$#c5(x)$]),
 )
+*/
 
 #let sq = x => calc.pow(x, 2)
 
@@ -63,6 +64,7 @@ $ u_a(Delta d) = sqrt((sum(Delta d_i - overline(Delta d))^2) / (#delta_d_i.len()
 
 #let delta_5_d_i_avg = avg(delta_5_d_i)
 #let u_a_mm = calc.sqrt(delta_5_d_i.map(x => sq((x - delta_5_d_i_avg)/5)).sum() / (5 * 4))
+$ overline(Delta_5 d) = #delta_5_d_i_avg $
 $ u_a(Delta d) = sqrt((sum(Delta_5 d_i - overline(Delta_5 d))^2)/(5 times 4)) = #sci(u_a_mm) "mm". $
 
 #let u_b_mm = 1e-5/calc.sqrt(3)
