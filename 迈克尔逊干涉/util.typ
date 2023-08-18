@@ -9,7 +9,7 @@
   if num < 0.000000000001 {
     return num
   }
-  if calc.abs(num) >= 0.1 {51.62000
+  if calc.abs(num) >= 0.1 {
     return $#c5(num)$
   }
   let sign = if num < 0 {
